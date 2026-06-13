@@ -256,6 +256,45 @@ def test_count_companies(temp_db):
     assert temp_db.count_companies("EventB") == 0
 
 
+def test_init_db_migrates_old_schema(tmp_path, monkeypatch):
+    import sqlite3
+    dbfile = tmp_path / "old.db"
+    # Simulate a pipeline.db created before the tier / contacts_attempted columns
+    conn = sqlite3.connect(dbfile)
+    conn.executescript(
+        """
+        CREATE TABLE companies (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL, domain TEXT, event_name TEXT NOT NULL,
+            sponsor_url TEXT, passed_icp INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(name, event_name)
+        );
+        CREATE TABLE contacts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            company_name TEXT, event_name TEXT, email TEXT
+        );
+        """
+    )
+    conn.commit()
+    conn.close()
+
+    monkeypatch.setattr(db, "DB_PATH", str(dbfile))
+    db.init_db()  # must ALTER TABLE to add the new columns, not crash
+
+    db.upsert_company("Stripe", "stripe.com", "EventA", "u")
+    db.mark_icp_passed("Stripe", "EventA", tier=1)
+    # The query that references the new columns now works on the migrated DB
+    needing = db.get_companies_needing_contacts("EventA")
+    assert [c["name"] for c in needing] == ["Stripe"]
+
+
+def test_init_db_is_idempotent(temp_db):
+    # Running init_db again on an already-migrated DB must not error
+    temp_db.init_db()
+    temp_db.init_db()
+
+
 def test_mark_icp_passed_stores_tier(temp_db):
     temp_db.upsert_company("Monzo", "monzo.com", "EventA", "u")
     temp_db.mark_icp_passed("Monzo", "EventA", tier=1)

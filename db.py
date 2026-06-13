@@ -43,6 +43,18 @@ def init_db():
                 UNIQUE(event_name, run_at)
             );
         """)
+        _ensure_company_columns(conn)
+
+
+def _ensure_company_columns(conn):
+    """Self-healing migration: add columns introduced after an existing
+    pipeline.db was first created, so older DBs don't crash on queries that
+    reference them. SQLite has no `ADD COLUMN IF NOT EXISTS`, so check first."""
+    existing = {row["name"] for row in conn.execute("PRAGMA table_info(companies)")}
+    if "tier" not in existing:
+        conn.execute("ALTER TABLE companies ADD COLUMN tier INTEGER")
+    if "contacts_attempted" not in existing:
+        conn.execute("ALTER TABLE companies ADD COLUMN contacts_attempted INTEGER DEFAULT 0")
 
 
 @contextmanager

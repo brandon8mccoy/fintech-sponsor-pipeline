@@ -121,7 +121,11 @@ def run():
         # don't re-spend Haiku calls on them every day.
         print("  Running ICP filter with Claude Haiku...")
         if new_companies:
-            icp_companies = icp_filter.filter_fintech_icp(new_companies)
+            try:
+                icp_companies = icp_filter.filter_fintech_icp(new_companies)
+            except Exception as e:
+                print(f"  ICP filter failed: {type(e).__name__}: {e}")
+                icp_companies = []
         else:
             icp_companies = []
 
