@@ -36,7 +36,8 @@ WINDOW_DAYS = 90
 # Keep a just-finished event in scope briefly (warm follow-up window), but drop
 # events older than this so stale entries in events.json aren't re-scraped forever.
 PAST_GRACE_DAYS = 30
-MAX_CONTACTS_PER_EVENT = 20
+MAX_CONTACTS_PER_EVENT = 200   # lifetime ceiling per event, across all runs
+MAX_CONTACTS_PER_RUN = 20      # new contacts added per event per run (daily throttle)
 
 
 def load_events() -> list[dict]:
@@ -127,19 +128,26 @@ def run():
         print(f"  {len(icp_companies)} new companies passed ICP filter")
 
         for company in icp_companies:
-            db.mark_icp_passed(company["name"], name)
+            db.mark_icp_passed(company["name"], name, company.get("tier", 2))
 
-        # Step 4: Pull contacts from Hunter.io for the new ICP companies only.
-        # Sort by ICP tier (Tier 1 first) so highest-fit companies fill the cap first.
-        # The cap counts contacts already stored for this event, so re-runs keep
-        # the per-event total at MAX_CONTACTS_PER_EVENT rather than adding 20 more.
-        icp_companies_sorted = sorted(icp_companies, key=lambda c: c.get("tier", 2))
+        # Step 4: Pull contacts for ICP companies that still need them — both the
+        # ones newly classified this run and any seen on prior runs we haven't
+        # contacted yet (backfill), highest tier first. Two caps apply:
+        #   MAX_CONTACTS_PER_EVENT — lifetime ceiling across all runs
+        #   MAX_CONTACTS_PER_RUN   — new contacts added this run (daily throttle)
+        # Caps are checked per company, so a run may overshoot the daily cap by at
+        # most one company's worth of contacts.
+        to_contact = db.get_companies_needing_contacts(name)
         total_contacts = len(db.get_contacts_for_event(name))
-        for company in icp_companies_sorted:
+        added_this_run = 0
+        for company in to_contact:
             if total_contacts >= MAX_CONTACTS_PER_EVENT:
-                print(f"  Reached {MAX_CONTACTS_PER_EVENT} contact cap — skipping remaining companies")
+                print(f"  Reached {MAX_CONTACTS_PER_EVENT}-contact lifetime cap for event — stopping")
                 break
-            print(f"  Pulling contacts for {company['name']} (Tier {company.get('tier', 2)})...")
+            if added_this_run >= MAX_CONTACTS_PER_RUN:
+                print(f"  Reached {MAX_CONTACTS_PER_RUN}-contact daily cap — stopping for this run")
+                break
+            print(f"  Pulling contacts for {company['name']} (Tier {company.get('tier') or 2})...")
             try:
                 contacts = contact_client.search_contacts(company["name"], company["domain"], dry_run=dry_run)
             except Exception as e:
@@ -148,11 +156,15 @@ def run():
 
             for contact in contacts:
                 contact["event_name"] = name
-                # upsert_contact returns False when the email already exists, so the
-                # same person is never written twice and only fresh inserts count
-                # toward the cap.
+                # upsert_contact returns False when (email, event) already exists,
+                # so only fresh inserts count toward the caps.
                 if db.upsert_contact(contact):
                     total_contacts += 1
+                    added_this_run += 1
+
+            # Mark attempted regardless of result so a no-email company isn't
+            # re-queried (and re-billed) on every future run.
+            db.mark_contacts_attempted(company["name"], name)
 
         # Step 5: Write to Sheets
         all_contacts = db.get_contacts_for_event(name)

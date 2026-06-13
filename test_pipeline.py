@@ -254,3 +254,32 @@ def test_count_companies(temp_db):
     temp_db.upsert_company("Plaid", "plaid.com", "EventA", "u")
     assert temp_db.count_companies("EventA") == 2
     assert temp_db.count_companies("EventB") == 0
+
+
+def test_mark_icp_passed_stores_tier(temp_db):
+    temp_db.upsert_company("Monzo", "monzo.com", "EventA", "u")
+    temp_db.mark_icp_passed("Monzo", "EventA", tier=1)
+    icp = temp_db.get_icp_companies("EventA")
+    assert icp[0]["tier"] == 1
+
+
+def test_companies_needing_contacts_only_icp_and_unattempted(temp_db):
+    temp_db.upsert_company("Monzo", "monzo.com", "EventA", "u")     # ICP, tier 1
+    temp_db.upsert_company("Tide", "tide.com", "EventA", "u")       # ICP, tier 2
+    temp_db.upsert_company("BigBank", "bigbank.com", "EventA", "u") # not ICP
+    temp_db.mark_icp_passed("Tide", "EventA", tier=2)
+    temp_db.mark_icp_passed("Monzo", "EventA", tier=1)
+
+    needing = temp_db.get_companies_needing_contacts("EventA")
+    # Non-ICP excluded; Tier 1 (Monzo) ordered before Tier 2 (Tide)
+    assert [c["name"] for c in needing] == ["Monzo", "Tide"]
+
+
+def test_companies_needing_contacts_excludes_attempted(temp_db):
+    temp_db.upsert_company("Monzo", "monzo.com", "EventA", "u")
+    temp_db.mark_icp_passed("Monzo", "EventA", tier=1)
+    assert len(temp_db.get_companies_needing_contacts("EventA")) == 1
+
+    # Once attempted (even with zero contacts found), it drops out of the backfill set
+    temp_db.mark_contacts_attempted("Monzo", "EventA")
+    assert temp_db.get_companies_needing_contacts("EventA") == []

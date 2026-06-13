@@ -52,7 +52,7 @@ events.json
 
 > **Note:** Local PDFs referenced by `sponsor_pdf_path` in `events.json` (e.g. `money2020_europe_2026_sponsors.pdf`) are gitignored (`*.pdf`) and are **not** committed to the repo. Place the file in the repo root before running; if it's missing, the pipeline logs a `[PDF] File read error` and falls through to web scraping rather than failing.
 
-**On contact volume:** The 20-contact cap per event reflects Hunter.io's free tier. A paid plan removes this cap and allows the full ICP list to be surfaced.
+**On contact volume:** Contacts are capped at **200 per event** (lifetime) and **20 per event per run** (daily throttle). Each run pulls contacts for ICP companies that don't have them yet — newly discovered *and* a backfill of previously-seen ones — Tier 1 first, until the daily cap is hit. Over successive days an event fills toward 200 without spending the whole Hunter budget in one run. A company is only ever queried once (even if it yields no emails), so Hunter usage stays bounded. The caps are tunable via `MAX_CONTACTS_PER_EVENT` / `MAX_CONTACTS_PER_RUN` in `pipeline.py`; Hunter's free tier is small, so raising them or running daily on a free key will exhaust it.
 
 ---
 

@@ -14,6 +14,8 @@ def init_db():
                 event_name TEXT NOT NULL,
                 sponsor_url TEXT,
                 passed_icp INTEGER DEFAULT 0,
+                tier INTEGER,
+                contacts_attempted INTEGER DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(name, event_name)
             );
@@ -67,12 +69,40 @@ def upsert_company(name: str, domain: str, event_name: str, sponsor_url: str) ->
         return cur.rowcount > 0
 
 
-def mark_icp_passed(name: str, event_name: str):
+def mark_icp_passed(name: str, event_name: str, tier: int = 2):
+    """Marks a company as an ICP match and stores its tier so contact-pull
+    ordering survives across runs (the in-memory tier is otherwise lost)."""
     with get_conn() as conn:
         conn.execute(
-            "UPDATE companies SET passed_icp = 1 WHERE name = ? AND event_name = ?",
+            "UPDATE companies SET passed_icp = 1, tier = ? WHERE name = ? AND event_name = ?",
+            (tier, name, event_name),
+        )
+
+
+def mark_contacts_attempted(name: str, event_name: str):
+    """Records that we ran a contact lookup for this company, so we don't
+    re-query the provider for it on every subsequent run (even if it yielded
+    no contacts). Keeps Hunter usage bounded."""
+    with get_conn() as conn:
+        conn.execute(
+            "UPDATE companies SET contacts_attempted = 1 WHERE name = ? AND event_name = ?",
             (name, event_name),
         )
+
+
+def get_companies_needing_contacts(event_name: str) -> list[dict]:
+    """ICP-passed companies for an event we haven't run a contact lookup for yet,
+    highest tier first. Drives the daily backfill toward the lifetime cap."""
+    with get_conn() as conn:
+        rows = conn.execute(
+            """
+            SELECT * FROM companies
+            WHERE event_name = ? AND passed_icp = 1 AND contacts_attempted = 0
+            ORDER BY COALESCE(tier, 2) ASC, id ASC
+            """,
+            (event_name,),
+        ).fetchall()
+        return [dict(r) for r in rows]
 
 
 def upsert_contact(contact: dict) -> bool:
