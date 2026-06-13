@@ -6,16 +6,18 @@ A daily pipeline that identifies fintech companies sponsoring industry conferenc
 
 ## The Signal: Why Event Sponsorship Predicts Purchase Intent
 
+Event sponsorship is already one of Gradient Labs' best-performing channels. The team sponsors and attends these conferences because the buyers are there — companies actively investing in their customer-facing operations, looking for tools that help them scale. This pipeline is **More** of what's already working: automating the manual work of identifying and reaching those same buyers before the event, at scale.
+
 A fintech company that pays to sponsor an industry conference has, by definition:
 
-- **Active budget allocated** to business development
+- **Active budget allocated** to business development — sponsorship is a strategic spend, not a tactical one
 - **A decision-maker attending** who can be reached before, during, or after the event
-- **Executive visibility** into their own growth ambitions (sponsorship is a strategic, not tactical, spend)
-- **Timing** — the 90-day window before a conference is when they're thinking about partnerships and new tools
+- **Demonstrated growth ambition** — these companies are investing in being seen, which means they're investing in growth
+- **The exact profile of a Gradient Labs customer** — consumer-facing fintechs scaling their operations, generating support volume, and looking for tools to handle it
 
-This is not a passive signal like a job posting. It's a company putting money down to be seen. That's a higher-intent proxy for "currently investing in growth" than almost any other publicly available data point — and it's scoped to the exact ecosystem (fintech events) where Gradient Labs' buyers congregate.
+The pipeline targets the 90-day window before each event. That window is an outreach opportunity: warm contacts before the conference floor, so that when Gradient Labs meets them in person, it's a follow-up — not a cold introduction. Companies sponsoring these events are already looking for products like Gradient Labs. This surfaces them systematically and gets outreach in front of them first.
 
-**Validation:** Gradient Labs itself sponsors these events. This pipeline automates the outreach motion that the team already knows works.
+**Why this signal over others:** Tested three alternatives — FCA new authorizations (too early in lifecycle, no support volume yet), complaints handler job postings (~41 live roles at any given time in UK fintech, too low volume), and funding + FCA filter (commoditized, replicable by any Sales Nav user). Event sponsorship is harder to automate — JS-heavy pages, PDF-only lists, no clean API — which is exactly what makes it defensible.
 
 ---
 
@@ -137,7 +139,7 @@ python pipeline.py --all
 python reset.py && python pipeline.py
 ```
 
-### Schedule (daily, macOS)
+### Schedule (weekly, macOS)
 
 ```bash
 crontab -e
@@ -145,8 +147,10 @@ crontab -e
 
 Add:
 ```
-0 7 * * * cd "/path/to/fintech-sponsor-pipeline" && source venv/bin/activate && python pipeline.py >> pipeline_cron.log 2>&1
+0 7 * * 1 cd "/path/to/fintech-sponsor-pipeline" && source venv/bin/activate && python pipeline.py >> pipeline_cron.log 2>&1
 ```
+
+This runs every Monday at 7am, checks for new sponsors across all events in the 90-day window, and updates the Google Sheet automatically. New sponsors added to event pages mid-cycle are picked up on the next run.
 
 ---
 
@@ -181,7 +185,7 @@ Apollo's People Search API requires a paid plan tier above the $149/mo basic pla
 Hunter.io's free plan allows ~100 searches/month. With 3 active events and 2 contacts per company, a 20-contact cap uses ~10 credits per event. This keeps the pipeline sustainable on a free tier while still producing a meaningful output (60 actionable contacts across events). The cap is tier-sorted — Tier 1 (consumer-facing fintechs, Gradient Labs' best-fit accounts) fill the cap first.
 
 **Why SQLite deduplication?**
-The pipeline runs daily. Sponsor lists are stable week-to-week. Without dedup, every run would re-process the same 400 companies and re-hit Hunter for the same contacts. SQLite tracks which companies have been seen per event and which contacts have been fetched, so each daily run only does incremental work.
+The pipeline runs weekly. Sponsor lists are stable between runs, but new sponsors are added to event pages as the conference approaches. Without dedup, every run would re-process the same 400 companies and re-hit Hunter for the same contacts. SQLite tracks which companies have been seen per event and which contacts have been fetched, so each run only does incremental work on genuinely new additions.
 
 ---
 
