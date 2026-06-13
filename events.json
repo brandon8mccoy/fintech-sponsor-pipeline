@@ -35,14 +35,6 @@
     "region": "US"
   },
   {
-    "name": "Money20/20 Europe 2026",
-    "date": "2026-06-04",
-    "sponsor_url": "https://europe.money2020.com/sponsor/sponsors",
-    "sponsor_pdf_path": "money2020_europe_2026_sponsors.pdf",
-    "location": "Amsterdam, Netherlands",
-    "region": "EU"
-  },
-  {
     "name": "Money20/20 Europe",
     "date": "2027-06-02",
     "sponsor_url": "https://europe.money2020.com/sponsor",

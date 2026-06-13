@@ -145,7 +145,6 @@ def _req_banding(sheet_id: int, num_cols: int) -> dict:
                 "range": {"sheetId": sheet_id, "startRowIndex": 1,
                           "startColumnIndex": 0, "endColumnIndex": num_cols},
                 "rowProperties": {
-                    "headerColor":      _NAVY,
                     "firstBandColor":   _WHITE,
                     "secondBandColor":  _LIGHT,
                 },
