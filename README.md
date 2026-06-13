@@ -1,6 +1,6 @@
 # Fintech Event Sponsor Pipeline
 
-A weekly pipeline that scrapes fintech conference sponsor pages, filters companies against Gradient Labs' ICP, and surfaces buying-committee contacts in a Google Sheet — ready for outreach before the event.
+A daily pipeline that scrapes fintech conference sponsor pages, filters companies against Gradient Labs' ICP, and surfaces buying-committee contacts in a Google Sheet — ready for outreach before the event.
 
 **Live Google Sheet:** [View here](https://docs.google.com/spreadsheets/d/1YPml-EFTLLH0BeWczKLRtO6qVUDSgmlgO4aeza1owI4)
 
@@ -10,7 +10,7 @@ A weekly pipeline that scrapes fintech conference sponsor pages, filters compani
 
 Gradient Labs currently has been seeing success targeting companies at FinTech conferences. Companies that sponsor these events are growth-stage fintechs actively investing in business development, the same profile as Gradient Labs' best customers. This pipeline automates contact sourcing of event sponsors: identifying those companies and getting outreach in front of them before the event, so that any in-person meeting is a warm follow-up rather than a cold introduction.
 
-The 90-day window before a conference is when these companies are most receptive. The pipeline runs weekly to catch new sponsors as they're added.
+The 90-day window before a conference is when these companies are most receptive. The pipeline runs daily so new sponsors are picked up as soon as they're added to event pages, which typically happens in waves as the conference approaches.
 
 ---
 
@@ -48,7 +48,9 @@ events.json
 [Google Sheets] ── One tab per event + Summary tab
 ```
 
-> **Note:** contacts are capped at 20 per event for this demo. In production, the pipeline pulls the full ICP list with no cap.
+**On PDFs:** Some events publish their full sponsor list as a PDF, which yields significantly more complete data than web scraping alone (Money20/20 Europe: 424 companies from PDF vs. ~4 from the web page). When a PDF path is provided in `events.json`, the pipeline uses it first. For all other events, the 4-tier web scraper runs automatically with no manual input required. Auto-detecting PDF links directly from event pages is a planned improvement.
+
+**On contact volume:** The 20-contact cap per event reflects Hunter.io's free tier. A paid plan removes this cap and allows the full ICP list to be surfaced.
 
 ---
 
@@ -75,10 +77,12 @@ New events can be added to `events.json` — the pipeline picks them up on the n
 
 | Event | Sponsors Scraped | Passed ICP | Contacts |
 |---|---|---|---|
-| Money20/20 Europe 2026 | 424 (PDF) | 197 | 20 |
+| Money20/20 Europe 2026 ¹ | 424 | 197 | 20 |
 | Fintech Devcon | 57 | 22 | 20 |
 | FinovateFall | 149 | 61 | 20 |
 | **Total** | **630+** | **280+** | **60** |
+
+¹ Gradient Labs attended Money20/20 Europe 2026. The event's published PDF sponsor list was used for this run, which is why it yielded significantly more companies. Fintech Devcon and FinovateFall were scraped entirely from their web pages — no PDF required.
 
 ---
 
@@ -125,22 +129,24 @@ python pipeline.py --all      # ignore date filter
 python reset.py && python pipeline.py  # fresh run
 ```
 
-### Schedule (weekly, macOS)
+### Schedule (daily, macOS)
 
 ```bash
 crontab -e
 ```
 
 ```
-0 7 * * 1 cd "/path/to/fintech-sponsor-pipeline" && source venv/bin/activate && python pipeline.py >> pipeline_cron.log 2>&1
+0 7 * * * cd "/path/to/fintech-sponsor-pipeline" && source venv/bin/activate && python pipeline.py >> pipeline_cron.log 2>&1
 ```
 
-Runs every Monday at 7am. New sponsors added to event pages mid-cycle are picked up automatically.
+Runs every morning at 7am. New sponsors added to event pages are picked up automatically on the next run.
 
 ---
 
 ## What I'd Build Next
 
-1. **AI-written outreach copy** — once a contact is identified, use Claude to generate a personalized first touch based on the company, their event sponsorship, and Gradient Labs' value prop
-2. **Automated sequence launch** — pipe new contacts directly into an outbound sequence (La Growth Machine, Lemlist, Amplemarket etc.) triggered the moment they're added to the sheet
+1. **Auto-detect PDF sponsor lists** — scan event pages for PDF links and parse them automatically, rather than requiring a manual path in `events.json`
+2. **AI-written outreach copy** — once a contact is identified, use Claude to generate a personalized first touch based on the company, their event sponsorship, and Gradient Labs' value prop
+3. **Automated sequence launch** — pipe new contacts directly into an outbound sequence (La Growth Machine, Lemlist, Amplemarket etc.) triggered the moment they're added to the sheet
+4. **CRM sync** — push ICP accounts to HubSpot/Salesforce with event metadata so reps have full context before any conversation
 
