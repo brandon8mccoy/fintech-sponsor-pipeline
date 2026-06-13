@@ -31,11 +31,11 @@ SCOPES = [
 # ── Column definitions ────────────────────────────────────────────────────────
 
 EVENT_HEADERS = [
-    "Company Name", "Website", "Company Size", "Contact Name",
+    "Company Name", "Website", "Contact Name",
     "Title", "Email", "LinkedIn URL", "Date Scraped", "Contact Actioned",
 ]
-ACTIONED_COL_IDX = 9          # 1-based column index of "Contact Actioned" (col I)
-EMAIL_COL_IDX    = 6          # 1-based column index of "Email" (col F)
+ACTIONED_COL_IDX = 8          # 1-based column index of "Contact Actioned" (col H)
+EMAIL_COL_IDX    = 5          # 1-based column index of "Email" (col E)
 
 SUMMARY_HEADERS = [
     "Event Name", "Event URL", "Event Date",
@@ -220,7 +220,6 @@ def write_event_tab(event_name: str, contacts: list[dict], companies: list[dict]
         rows.append([
             contact.get("company_name", ""),
             company.get("domain", ""),
-            company.get("employee_count", ""),
             full_name,
             contact.get("title", ""),
             email,
@@ -235,7 +234,7 @@ def write_event_tab(event_name: str, contacts: list[dict], companies: list[dict]
     sid = ws.id
     _clear_banding(spreadsheet, sid)
 
-    col_widths = [200, 170, 120, 170, 200, 220, 200, 115, 140]
+    col_widths = [200, 170, 170, 200, 220, 200, 115, 140]
     requests = [
         _req_freeze(sid),
         _req_header_format(sid, len(EVENT_HEADERS)),
@@ -261,7 +260,10 @@ def write_summary_tab(summary_rows: list[dict]) -> None:
         tab_name = r.get("event_name", "")[:100]
         # Escape single quotes in tab names for the COUNTIF formula
         safe_tab = tab_name.replace("'", "''")
-        actioned_formula = f"=COUNTIF('{safe_tab}'!I:I,TRUE)"
+        # Derive the actioned column letter from its index so this can't drift
+        # if the event-tab schema changes.
+        actioned_col = chr(ord("A") + ACTIONED_COL_IDX - 1)
+        actioned_formula = f"=COUNTIF('{safe_tab}'!{actioned_col}:{actioned_col},TRUE)"
 
         rows.append([
             tab_name,

@@ -25,10 +25,11 @@ def init_db():
                 first_name TEXT,
                 last_name TEXT,
                 title TEXT,
-                email TEXT UNIQUE,
+                email TEXT,
                 linkedin_url TEXT,
                 apollo_id TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(email, event_name)
             );
 
             CREATE TABLE IF NOT EXISTS scrape_runs (
@@ -75,8 +76,9 @@ def mark_icp_passed(name: str, event_name: str):
 
 
 def upsert_contact(contact: dict) -> bool:
-    """Returns True if the contact was newly inserted, False if a row with that
-    email already existed (the email column is UNIQUE, so duplicates are ignored)."""
+    """Returns True if the contact was newly inserted, False if this email was
+    already stored for this event ((email, event_name) is UNIQUE, so the same
+    person can still appear on a different event's tab)."""
     with get_conn() as conn:
         cur = conn.execute(
             """

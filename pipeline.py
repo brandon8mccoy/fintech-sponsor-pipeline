@@ -3,7 +3,7 @@ Fintech conference sponsor scraping pipeline.
 
 Flow:
   1. Read events.json
-  2. Filter to events within 90 days from today (no lower bound — recent past events included)
+  2. Filter to events within 90 days ahead (and up to PAST_GRACE_DAYS in the past)
   3. Scrape sponsor page (PDF if available, then Firecrawl → Jina → BS+Claude fallback chain)
   4. Filter companies to fintech ICP using Claude Haiku
   5. Pull contacts from Hunter.io
@@ -33,6 +33,9 @@ load_dotenv()
 
 EVENTS_FILE = Path("events.json")
 WINDOW_DAYS = 90
+# Keep a just-finished event in scope briefly (warm follow-up window), but drop
+# events older than this so stale entries in events.json aren't re-scraped forever.
+PAST_GRACE_DAYS = 30
 MAX_CONTACTS_PER_EVENT = 20
 
 
@@ -42,9 +45,12 @@ def load_events() -> list[dict]:
 
 
 def within_window(event_date_str: str) -> bool:
+    """In scope if the event is upcoming within WINDOW_DAYS, or finished no more
+    than PAST_GRACE_DAYS ago. The lower bound stops stale past events from being
+    re-scraped (and re-spending API calls) on every daily run."""
     event_date = datetime.strptime(event_date_str, "%Y-%m-%d").date()
     today = date.today()
-    return event_date <= today + timedelta(days=WINDOW_DAYS)
+    return today - timedelta(days=PAST_GRACE_DAYS) <= event_date <= today + timedelta(days=WINDOW_DAYS)
 
 
 def run():

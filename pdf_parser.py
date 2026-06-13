@@ -150,5 +150,5 @@ Return ONLY a JSON array. Example format:
         return results
 
     except Exception as e:
-        print(f"  [PDF] Claude extraction error: {e}")
+        print(f"  [PDF] Claude extraction error: {type(e).__name__}: {e}")
         return []

@@ -107,7 +107,7 @@ def _try_firecrawl(url: str, source_domain: str) -> list[dict]:
         markdown = result.markdown if hasattr(result, "markdown") else ""
         return _parse_companies_from_markdown(markdown, source_domain)
     except Exception as e:
-        print(f"  [Firecrawl] Error: {e}")
+        print(f"  [Firecrawl] Error: {type(e).__name__}: {e}")
         return []
 
 
@@ -128,7 +128,7 @@ def _try_jina(url: str, source_domain: str) -> list[dict]:
             return []
         return _parse_companies_from_markdown(resp.text, source_domain)
     except Exception as e:
-        print(f"  [Jina AI] Error: {e}")
+        print(f"  [Jina AI] Error: {type(e).__name__}: {e}")
         return []
 
 
@@ -162,7 +162,7 @@ def _try_bs_claude(url: str, source_domain: str) -> list[dict]:
 
         return _extract_via_claude(text, source_domain)
     except Exception as e:
-        print(f"  [BS+Claude] Error: {e}")
+        print(f"  [BS+Claude] Error: {type(e).__name__}: {e}")
         return []
 
 
@@ -201,7 +201,7 @@ Return only the JSON array, no other text."""
             and item.get("domain", "").strip().lower() != source_domain
         ]
     except Exception as e:
-        print(f"  [BS+Claude] Claude extraction error: {e}")
+        print(f"  [BS+Claude] Claude extraction error: {type(e).__name__}: {e}")
         return []
 
 

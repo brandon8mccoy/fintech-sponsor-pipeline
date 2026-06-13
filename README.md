@@ -50,6 +50,8 @@ events.json
 
 **On PDFs:** Some events publish their full sponsor list as a PDF, which yields significantly more complete data than web scraping alone (Money20/20 Europe: 424 companies from PDF vs. ~4 from the web page). When a PDF path is provided in `events.json`, the pipeline uses it first. When none is provided, the scraper auto-discovers a linked PDF on the sponsor page (scoring links by sponsor/exhibitor/brochure keywords) before falling back to the 4-tier web chain — so no manual input is required.
 
+> **Note:** Local PDFs referenced by `sponsor_pdf_path` in `events.json` (e.g. `money2020_europe_2026_sponsors.pdf`) are gitignored (`*.pdf`) and are **not** committed to the repo. Place the file in the repo root before running; if it's missing, the pipeline logs a `[PDF] File read error` and falls through to web scraping rather than failing.
+
 **On contact volume:** The 20-contact cap per event reflects Hunter.io's free tier. A paid plan removes this cap and allows the full ICP list to be surfaced.
 
 ---
