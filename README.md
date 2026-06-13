@@ -48,7 +48,7 @@ events.json
 [Google Sheets] ── One tab per event + Summary tab
 ```
 
-**On PDFs:** Some events publish their full sponsor list as a PDF, which yields significantly more complete data than web scraping alone (Money20/20 Europe: 424 companies from PDF vs. ~4 from the web page). When a PDF path is provided in `events.json`, the pipeline uses it first. For all other events, the 4-tier web scraper runs automatically with no manual input required. Auto-detecting PDF links directly from event pages is a planned improvement.
+**On PDFs:** Some events publish their full sponsor list as a PDF, which yields significantly more complete data than web scraping alone (Money20/20 Europe: 424 companies from PDF vs. ~4 from the web page). When a PDF path is provided in `events.json`, the pipeline uses it first. When none is provided, the scraper auto-discovers a linked PDF on the sponsor page (scoring links by sponsor/exhibitor/brochure keywords) before falling back to the 4-tier web chain — so no manual input is required.
 
 **On contact volume:** The 20-contact cap per event reflects Hunter.io's free tier. A paid plan removes this cap and allows the full ICP list to be surfaced.
 
@@ -145,7 +145,7 @@ Runs every morning at 7am. New sponsors added to event pages are picked up autom
 
 ## What I'd Build Next
 
-1. **Auto-detect PDF sponsor lists** — scan event pages for PDF links and parse them automatically, rather than requiring a manual path in `events.json`
+1. **Render JS-heavy sponsor pages** — Money20/20 USA and IFGS load sponsors client-side, so the static-HTML tiers (and PDF link discovery) find nothing. A headless render (Firecrawl's JS mode or Playwright) would unlock them.
 2. **AI-written outreach copy** — once a contact is identified, use Claude to generate a personalized first touch based on the company, their event sponsorship, and Gradient Labs' value prop
 3. **Automated sequence launch** — pipe new contacts directly into an outbound sequence (La Growth Machine, Lemlist, Amplemarket etc.) triggered the moment they're added to the sheet
 4. **CRM sync** — push ICP accounts to HubSpot/Salesforce with event metadata so reps have full context before any conversation
