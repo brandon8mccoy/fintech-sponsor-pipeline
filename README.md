@@ -8,7 +8,7 @@ A weekly pipeline that scrapes fintech conference sponsor pages, filters compani
 
 ## The Signal
 
-Gradient Labs already sponsors and attends fintech conferences. Companies that sponsor these events are growth-stage fintechs actively investing in business development — the same profile as Gradient Labs' best customers. This pipeline automates what the team is already doing manually: identifying those companies and getting outreach in front of them before the event, so that any in-person meeting is a warm follow-up rather than a cold introduction.
+Gradient Labs currently has been seeing success targeting companies at FinTech conferences. Companies that sponsor these events are growth-stage fintechs actively investing in business development, the same profile as Gradient Labs' best customers. This pipeline automates contact sourcing of event sponsors: identifying those companies and getting outreach in front of them before the event, so that any in-person meeting is a warm follow-up rather than a cold introduction.
 
 The 90-day window before a conference is when these companies are most receptive. The pipeline runs weekly to catch new sponsors as they're added.
 
@@ -142,5 +142,5 @@ Runs every Monday at 7am. New sponsors added to event pages mid-cycle are picked
 ## What I'd Build Next
 
 1. **AI-written outreach copy** — once a contact is identified, use Claude to generate a personalized first touch based on the company, their event sponsorship, and Gradient Labs' value prop
-2. **Automated sequence launch** — pipe new contacts directly into an outbound sequence (Apollo, Outreach, etc.) triggered the moment they're added to the sheet
-3. **CRM sync** — push ICP accounts to HubSpot/Salesforce with event metadata as a custom field so reps have context before any conversation
+2. **Automated sequence launch** — pipe new contacts directly into an outbound sequence (La Growth Machine, Lemlist, Amplemarket etc.) triggered the moment they're added to the sheet
+
