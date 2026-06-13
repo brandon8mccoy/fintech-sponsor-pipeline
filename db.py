@@ -74,9 +74,11 @@ def mark_icp_passed(name: str, event_name: str):
         )
 
 
-def upsert_contact(contact: dict):
+def upsert_contact(contact: dict) -> bool:
+    """Returns True if the contact was newly inserted, False if a row with that
+    email already existed (the email column is UNIQUE, so duplicates are ignored)."""
     with get_conn() as conn:
-        conn.execute(
+        cur = conn.execute(
             """
             INSERT OR IGNORE INTO contacts
                 (company_name, event_name, first_name, last_name, title, email, linkedin_url, apollo_id)
@@ -85,6 +87,17 @@ def upsert_contact(contact: dict):
             """,
             contact,
         )
+        return cur.rowcount > 0
+
+
+def count_companies(event_name: str) -> int:
+    """Total distinct companies ever seen for an event (across all daily runs)."""
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT COUNT(*) AS n FROM companies WHERE event_name = ?",
+            (event_name,),
+        ).fetchone()
+        return row["n"]
 
 
 def get_icp_companies(event_name: str) -> list[dict]:

@@ -1,6 +1,9 @@
 import os
 import re
 import json
+from typing import Optional
+from urllib.parse import urljoin
+
 import requests
 import anthropic
 from bs4 import BeautifulSoup
@@ -34,25 +37,44 @@ def _get_anthropic() -> anthropic.Anthropic:
 def scrape_sponsors(url: str, pdf_source: str = None) -> list[dict]:
     """
     Scrapes a sponsor page using a four-stage fallback chain:
-      0. PDF (if pdf_source is provided — local path or URL)
+      0. PDF (explicit pdf_source, or one auto-discovered on the page)
       1. Firecrawl (markdown parser)
       2. Jina AI Reader (free, handles some JS pages differently)
       3. Direct requests + BeautifulSoup + Claude Haiku extraction
     Moves to the next stage if the current one returns < FALLBACK_THRESHOLD companies.
     """
-    # Stage 0: PDF (highest priority when available)
+    source_domain = _extract_domain(url)
+    companies = []
+
+    # Stage 0: PDF (highest priority when available).
+    # An explicit path/URL from events.json is trusted outright; otherwise try to
+    # auto-discover a linked PDF sponsor list on the page.
+    manual_pdf = pdf_source is not None
+    if not manual_pdf:
+        pdf_source = _discover_pdf_link(url)
+        if pdf_source:
+            print(f"  [PDF] Auto-discovered sponsor PDF: {pdf_source[:80]}")
+
     if pdf_source:
         print(f"  [PDF] Reading from {pdf_source[:80]}...")
-        companies = pdf_parser.extract_sponsors_from_pdf(pdf_source)
+        pdf_companies = pdf_parser.extract_sponsors_from_pdf(pdf_source)
+        # An explicitly-provided PDF is authoritative — return whatever it yields.
+        if manual_pdf and pdf_companies:
+            print(f"  [PDF] {len(pdf_companies)} companies extracted")
+            return pdf_companies
+        # An auto-discovered PDF is only trusted if it clears the threshold;
+        # otherwise keep its results and let the web stages add to them.
+        if len(pdf_companies) >= FALLBACK_THRESHOLD:
+            print(f"  [PDF] {len(pdf_companies)} companies extracted")
+            return pdf_companies
+        companies = pdf_companies
         if companies:
-            print(f"  [PDF] {len(companies)} companies extracted")
-            return companies
-        print("  [PDF] No companies extracted, falling through to web scrape...")
-
-    source_domain = _extract_domain(url)
+            print(f"  [PDF] {len(companies)} companies — below threshold, merging with web scrape...")
+        else:
+            print("  [PDF] No companies extracted, falling through to web scrape...")
 
     # Stage 1: Firecrawl
-    companies = _try_firecrawl(url, source_domain)
+    companies = _merge(companies, _try_firecrawl(url, source_domain))
     if len(companies) >= FALLBACK_THRESHOLD:
         print(f"  [Firecrawl] {len(companies)} companies found")
         return companies
@@ -181,6 +203,56 @@ Return only the JSON array, no other text."""
     except Exception as e:
         print(f"  [BS+Claude] Claude extraction error: {e}")
         return []
+
+
+# ---------------------------------------------------------------------------
+# Stage 0 helper: PDF link auto-discovery
+# ---------------------------------------------------------------------------
+
+# Keywords that suggest an anchor points to a sponsor/exhibitor PDF list.
+_PDF_LINK_KEYWORDS = (
+    "sponsor", "exhibitor", "partner", "brochure",
+    "prospectus", "list", "directory", "guide",
+)
+
+
+def _discover_pdf_link(url: str) -> Optional[str]:
+    """
+    Best-effort scan of a sponsor page's HTML for a link to a PDF sponsor list.
+    Returns the absolute URL of the most likely PDF, or None.
+
+    Only sees PDFs linked in the static HTML — JS-injected links won't appear,
+    which is fine: this is a cheap pre-check before the web fallback chain.
+    """
+    try:
+        resp = requests.get(
+            url,
+            headers={"User-Agent": "Mozilla/5.0 (compatible; sponsor-scraper/1.0)"},
+            timeout=20,
+        )
+    except requests.RequestException as e:
+        print(f"  [PDF] Discovery request error: {e}")
+        return None
+    if resp.status_code != 200:
+        return None
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+    candidates = []  # (score, absolute_url)
+    for a in soup.find_all("a", href=True):
+        href = a["href"].strip()
+        # Match .pdf even when followed by a query string or fragment.
+        if not re.search(r"\.pdf(\?|#|$)", href, re.IGNORECASE):
+            continue
+        absolute = urljoin(url, href)
+        haystack = f"{href} {a.get_text() or ''}".lower()
+        score = sum(1 for kw in _PDF_LINK_KEYWORDS if kw in haystack)
+        candidates.append((score, absolute))
+
+    if not candidates:
+        return None
+    # Highest keyword score wins; ties keep document order (first link found).
+    candidates.sort(key=lambda c: c[0], reverse=True)
+    return candidates[0][1]
 
 
 # ---------------------------------------------------------------------------
