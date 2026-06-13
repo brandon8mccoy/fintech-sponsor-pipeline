@@ -1,0 +1,73 @@
+[
+  {
+    "name": "FinovateFall",
+    "date": "2026-09-09",
+    "sponsor_url": "https://informaconnect.com/finovatefall/sponsors/",
+    "location": "New York, NY",
+    "region": "US"
+  },
+  {
+    "name": "Sibos 2026",
+    "date": "2026-09-29",
+    "sponsor_url": "https://www.sibos.com/sponsorship",
+    "location": "Miami, FL",
+    "region": "US"
+  },
+  {
+    "name": "Money20/20 USA",
+    "date": "2026-10-18",
+    "sponsor_url": "https://us.money2020.com/sponsor",
+    "location": "Las Vegas, NV",
+    "region": "US"
+  },
+  {
+    "name": "DC Fintech Week",
+    "date": "2026-10-05",
+    "sponsor_url": "https://www.dcfintechweek.org/sponsors",
+    "location": "Washington, DC",
+    "region": "US"
+  },
+  {
+    "name": "Fintech Devcon",
+    "date": "2026-08-03",
+    "sponsor_url": "https://fintechdevcon.io/sponsors/",
+    "location": "Denver, CO",
+    "region": "US"
+  },
+  {
+    "name": "Money20/20 Europe 2026",
+    "date": "2026-06-04",
+    "sponsor_url": "https://europe.money2020.com/sponsor/sponsors",
+    "sponsor_pdf_path": "money2020_europe_2026_sponsors.pdf",
+    "location": "Amsterdam, Netherlands",
+    "region": "EU"
+  },
+  {
+    "name": "Money20/20 Europe",
+    "date": "2027-06-02",
+    "sponsor_url": "https://europe.money2020.com/sponsor",
+    "location": "Amsterdam, Netherlands",
+    "region": "EU"
+  },
+  {
+    "name": "FinovateEurope",
+    "date": "2027-02-10",
+    "sponsor_url": "https://informaconnect.com/finovateeurope/sponsors/",
+    "location": "London, UK",
+    "region": "EU"
+  },
+  {
+    "name": "Innovate Finance Global Summit",
+    "date": "2027-04-20",
+    "sponsor_url": "https://www.innovatefinance.com/ifgs/sponsors/",
+    "location": "London, UK",
+    "region": "EU"
+  },
+  {
+    "name": "Nordic Fintech Summit",
+    "date": "2027-05-13",
+    "sponsor_url": "https://nordicfintechsummit.com/sponsors",
+    "location": "Helsinki, Finland",
+    "region": "EU"
+  }
+]

@@ -1,0 +1,14 @@
+venv/
+.env
+*.env
+*.db
+service_account.json
+google_credentials.json
+__pycache__/
+*.py[cod]
+*.pyo
+*.log
+*.pdf
+.DS_Store
+.vscode/
+.idea/
