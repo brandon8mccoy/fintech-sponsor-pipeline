@@ -8,9 +8,9 @@ A daily pipeline that scrapes fintech conference sponsor pages, filters companie
 
 ## The Signal
 
-Gradient Labs sponsors and attends FinTech conferences — and the companies that do the same are growth-stage fintechs actively investing in their go-to-market, the same profile as Gradient Labs' best customers. This pipeline automates contact sourcing of event sponsors: identifying those companies and getting outreach in front of them before the event, so that any in-person meeting is a warm follow-up rather than a cold introduction.
+Gradient Labs sponsors and attends FinTech conferences, and the companies that do the same are growth-stage fintechs actively engaging in tools like Gradient Labs provides, the same profile as Gradient Labs' best customers. This pipeline automates contact sourcing of event sponsors: identifying those companies and contacts before the event, so that any in-person meeting has contacts ready for warm outreach rather than a cold introduction.
 
-The 90-day window before a conference is when these companies are most receptive. The pipeline is built to run daily — new sponsors are picked up as they're added to event pages, which typically happens in waves as the conference approaches. For events Gradient Labs has already attended, it also works as a retroactive backfill. (For this demonstration, the cron job is not scheduled — but setup takes one command; see below.)
+The 90-day window before a conference is when these companies are most receptive. The pipeline is built to run daily — new sponsors are picked up as they're added to event pages, which typically happens in waves as the conference approaches. (For this demonstration, the cron job is not scheduled — but setup takes one command; see below.)
 
 ---
 
@@ -23,7 +23,7 @@ events.json
 [Date Filter] ── 90-day rolling window
     │
     ▼
-[Scraper] ── 4-tier fallback chain per event
+[Scraper] ── 3-tier fallback chain per event
     │   Stage 1: Firecrawl
     │   Stage 2: Jina AI Reader (JS-heavy pages)
     │   Stage 3: BeautifulSoup + Claude Haiku
@@ -51,8 +51,6 @@ events.json
     ▼
 [Google Sheets] ── One tab per event + Summary tab
 ```
-
-**On PDFs:** The pipeline supports an optional PDF path per event in `events.json` — useful for one-time historical backfills where a sponsor list PDF is available. The daily scrape runs entirely via the web chain and requires no PDFs.
 
 **On contact volume:** Contacts are capped at **200 per event** (lifetime) and **20 per event per run** (daily throttle). Each run pulls contacts for ICP companies that don't have them yet — newly discovered *and* a backfill of previously-seen ones — Tier 1 first, until the daily cap is hit. Over successive runs an event fills toward 200 without spending the whole Hunter budget at once. A company is only ever queried once (even if it yields no emails), so Hunter usage stays bounded. The caps are tunable via `MAX_CONTACTS_PER_EVENT` / `MAX_CONTACTS_PER_RUN` in `pipeline.py`.
 
@@ -150,5 +148,4 @@ Runs every morning at 7am. New sponsors added to event pages are picked up autom
 1. **Render JS-heavy sponsor pages** — Money20/20 USA and IFGS load sponsors client-side, so the static-HTML tiers (and PDF link discovery) find nothing. A headless render (Firecrawl's JS mode or Playwright) would unlock them.
 2. **AI-written outreach copy** — once a contact is identified, use Claude to generate a personalized first touch based on the company, their event sponsorship, and Gradient Labs' value prop
 3. **Automated sequence launch** — pipe new contacts directly into an outbound sequence (La Growth Machine, Lemlist, Amplemarket etc.) triggered the moment they're added to the sheet
-4. **CRM sync** — push ICP accounts to HubSpot/Salesforce with event metadata so reps have full context before any conversation
 
