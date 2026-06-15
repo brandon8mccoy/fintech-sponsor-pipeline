@@ -123,10 +123,10 @@ GOOGLE_CREDENTIALS_PATH=service_account.json
 ### Run
 
 ```bash
-python pipeline.py          # events in the 90-day window
-python pipeline.py --dry-run  # stub contacts, no API calls
-python pipeline.py --all      # ignore date filter
-python reset.py && python pipeline.py  # fresh run
+python3 pipeline.py          # events in the 90-day window
+python3 pipeline.py --dry-run  # stub contacts, no API calls
+python3 pipeline.py --all      # ignore date filter
+python3 reset.py && python3 pipeline.py  # fresh run
 ```
 
 ### Schedule (daily, macOS)
@@ -145,7 +145,7 @@ Runs every morning at 7am. New sponsors added to event pages are picked up autom
 
 ## What I'd Build Next
 
-1. **Render JS-heavy sponsor pages** — Money20/20 USA and IFGS load sponsors client-side, so the static-HTML tiers (and PDF link discovery) find nothing. A headless render (Firecrawl's JS mode or Playwright) would unlock them.
+1. **Render JS-heavy sponsor pages** — Money20/20 USA and IFGS load sponsors client-side, so the static-HTML scraper finds nothing. A headless render (Firecrawl's JS mode or Playwright) would unlock them.
 2. **AI-written outreach copy** — once a contact is identified, use Claude to generate a personalized first touch based on the company, their event sponsorship, and Gradient Labs' value prop
 3. **Automated sequence launch** — pipe new contacts directly into an outbound sequence (La Growth Machine, Lemlist, Amplemarket etc.) triggered the moment they're added to the sheet
 
