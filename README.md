@@ -10,7 +10,7 @@ A daily pipeline that scrapes fintech conference sponsor pages, filters companie
 
 Gradient Labs sponsors and attends FinTech conferences — and the companies that do the same are growth-stage fintechs actively investing in their go-to-market, the same profile as Gradient Labs' best customers. This pipeline automates contact sourcing of event sponsors: identifying those companies and getting outreach in front of them before the event, so that any in-person meeting is a warm follow-up rather than a cold introduction.
 
-The 90-day window before a conference is when these companies are most receptive. Rather than running daily (unnecessary given how slowly sponsor pages update), the pipeline is designed to run weekly — new sponsors are picked up as they're added to event pages, which typically happens in waves as the conference approaches. For the initial run on events Gradient Labs has already attended, it also works as a retroactive backfill.
+The 90-day window before a conference is when these companies are most receptive. The pipeline is built to run daily — new sponsors are picked up as they're added to event pages, which typically happens in waves as the conference approaches. For events Gradient Labs has already attended, it also works as a retroactive backfill. (For this demonstration, the cron job is not scheduled — but setup takes one command; see below.)
 
 ---
 
@@ -141,10 +141,10 @@ crontab -e
 ```
 
 ```
-0 7 * * * cd "/path/to/fintech-sponsor-pipeline" && source venv/bin/activate && python pipeline.py >> pipeline_cron.log 2>&1
+0 7 * * * cd "/Users/your-name/fintech-sponsor-pipeline" && python3 pipeline.py >> pipeline_cron.log 2>&1
 ```
 
-Runs every morning at 7am. New sponsors added to event pages are picked up automatically on the next run.
+Runs every morning at 7am. New sponsors added to event pages are picked up automatically.
 
 ---
 
