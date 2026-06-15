@@ -37,7 +37,7 @@ WINDOW_DAYS = 90
 # events older than this so stale entries in events.json aren't re-scraped forever.
 PAST_GRACE_DAYS = 30
 MAX_CONTACTS_PER_EVENT = 200   # lifetime ceiling per event, across all runs
-MAX_CONTACTS_PER_RUN = 20      # new contacts added per event per run (daily throttle)
+MAX_CONTACTS_PER_RUN = 200     # new contacts added per event per run
 
 
 def load_events() -> list[dict]:
