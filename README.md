@@ -24,7 +24,7 @@ events.json
     │
     ▼
 [Scraper] ── 4-tier fallback chain per event
-    │   Stage 0: PDF (most reliable when available)
+    │   Stage 0: PDF (optional, for one-time historical runs)
     │   Stage 1: Firecrawl
     │   Stage 2: Jina AI Reader (JS-heavy pages)
     │   Stage 3: BeautifulSoup + Claude Haiku
@@ -53,9 +53,7 @@ events.json
 [Google Sheets] ── One tab per event + Summary tab
 ```
 
-**On PDFs:** Some events publish their full sponsor list as a PDF, which yields significantly more complete data than web scraping alone (Money20/20 Europe: 424 companies from PDF vs. ~4 from the web page). When a PDF path is provided in `events.json`, the pipeline uses it first. When none is provided, the scraper auto-discovers a linked PDF on the sponsor page (scoring links by sponsor/exhibitor/brochure keywords) before falling back to the 4-tier web chain — so no manual input is required.
-
-> **Note:** Local PDFs referenced by `sponsor_pdf_path` in `events.json` (e.g. `money2020_europe_2026_sponsors.pdf`) are gitignored (`*.pdf`) and are **not** committed to the repo. Place the file in the repo root before running; if it's missing, the pipeline logs a `[PDF] File read error` and falls through to web scraping rather than failing.
+**On PDFs:** The pipeline supports an optional PDF path per event in `events.json` — useful for one-time historical backfills where a sponsor list PDF is available. The daily scrape runs entirely via the web chain and requires no PDFs.
 
 **On contact volume:** Contacts are capped at **200 per event** (lifetime) and **20 per event per run** (daily throttle). Each run pulls contacts for ICP companies that don't have them yet — newly discovered *and* a backfill of previously-seen ones — Tier 1 first, until the daily cap is hit. Over successive runs an event fills toward 200 without spending the whole Hunter budget at once. A company is only ever queried once (even if it yields no emails), so Hunter usage stays bounded. The caps are tunable via `MAX_CONTACTS_PER_EVENT` / `MAX_CONTACTS_PER_RUN` in `pipeline.py`.
 
