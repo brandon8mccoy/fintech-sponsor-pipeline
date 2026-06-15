@@ -24,7 +24,6 @@ events.json
     │
     ▼
 [Scraper] ── 4-tier fallback chain per event
-    │   Stage 0: PDF (optional, for one-time historical runs)
     │   Stage 1: Firecrawl
     │   Stage 2: Jina AI Reader (JS-heavy pages)
     │   Stage 3: BeautifulSoup + Claude Haiku
