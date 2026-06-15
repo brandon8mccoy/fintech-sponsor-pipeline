@@ -8,9 +8,9 @@ A daily pipeline that scrapes fintech conference sponsor pages, filters companie
 
 ## The Signal
 
-Gradient Labs currently has been seeing success targeting companies at FinTech conferences. Companies that sponsor these events are growth-stage fintechs actively investing in business development, the same profile as Gradient Labs' best customers. This pipeline automates contact sourcing of event sponsors: identifying those companies and getting outreach in front of them before the event, so that any in-person meeting is a warm follow-up rather than a cold introduction.
+Gradient Labs sponsors and attends FinTech conferences — and the companies that do the same are growth-stage fintechs actively investing in their go-to-market, the same profile as Gradient Labs' best customers. This pipeline automates contact sourcing of event sponsors: identifying those companies and getting outreach in front of them before the event, so that any in-person meeting is a warm follow-up rather than a cold introduction.
 
-The 90-day window before a conference is when these companies are most receptive. The pipeline runs daily so new sponsors are picked up as soon as they're added to event pages, which typically happens in waves as the conference approaches.
+The 90-day window before a conference is when these companies are most receptive. Rather than running daily (unnecessary given how slowly sponsor pages update), the pipeline is designed to run weekly — new sponsors are picked up as they're added to event pages, which typically happens in waves as the conference approaches. For the initial run on events Gradient Labs has already attended, it also works as a retroactive backfill.
 
 ---
 
@@ -39,10 +39,15 @@ events.json
     │   Excluded: B2B data/API vendors, core banking platforms, enterprise RegTech
     │
     ▼
-[Hunter.io] ── 2 contacts per company, Tier 1 first
+[Hunter.io] ── up to 8 contacts per company, Tier 1 companies first
     │   Priority 1: CX / Customer Operations / Support
     │   Priority 2: Operations / COO
-    │   Priority 3: CEO / Founder
+    │   Priority 3: Revenue / Sales / GTM
+    │   Priority 4: Marketing
+    │   Priority 5: Product
+    │   Priority 6: CEO / Founder
+    │   Priority 7: Finance / CFO
+    │   Priority 8: Other senior / C-suite
     │
     ▼
 [Google Sheets] ── One tab per event + Summary tab
@@ -52,7 +57,7 @@ events.json
 
 > **Note:** Local PDFs referenced by `sponsor_pdf_path` in `events.json` (e.g. `money2020_europe_2026_sponsors.pdf`) are gitignored (`*.pdf`) and are **not** committed to the repo. Place the file in the repo root before running; if it's missing, the pipeline logs a `[PDF] File read error` and falls through to web scraping rather than failing.
 
-**On contact volume:** Contacts are capped at **200 per event** (lifetime) and **20 per event per run** (daily throttle). Each run pulls contacts for ICP companies that don't have them yet — newly discovered *and* a backfill of previously-seen ones — Tier 1 first, until the daily cap is hit. Over successive days an event fills toward 200 without spending the whole Hunter budget in one run. A company is only ever queried once (even if it yields no emails), so Hunter usage stays bounded. The caps are tunable via `MAX_CONTACTS_PER_EVENT` / `MAX_CONTACTS_PER_RUN` in `pipeline.py`; Hunter's free tier is small, so raising them or running daily on a free key will exhaust it.
+**On contact volume:** Contacts are capped at **200 per event** (lifetime) and **20 per event per run** (daily throttle). Each run pulls contacts for ICP companies that don't have them yet — newly discovered *and* a backfill of previously-seen ones — Tier 1 first, until the daily cap is hit. Over successive runs an event fills toward 200 without spending the whole Hunter budget at once. A company is only ever queried once (even if it yields no emails), so Hunter usage stays bounded. The caps are tunable via `MAX_CONTACTS_PER_EVENT` / `MAX_CONTACTS_PER_RUN` in `pipeline.py`.
 
 ---
 
@@ -60,7 +65,6 @@ events.json
 
 | Event | Date | Region |
 |---|---|---|
-| Money20/20 Europe 2026 | June 4, 2026 | EU |
 | Fintech Devcon | Aug 3, 2026 | US |
 | FinovateFall | Sep 9, 2026 | US |
 | Sibos 2026 | Sep 29, 2026 | US |
@@ -75,16 +79,15 @@ New events can be added to `events.json` — the pipeline picks them up on the n
 
 ---
 
-## Results (first run)
+## Results
 
 | Event | Sponsors Scraped | Passed ICP | Contacts |
 |---|---|---|---|
-| Money20/20 Europe 2026 ¹ | 424 | 197 | 20 |
-| Fintech Devcon | 57 | 22 | 20 |
-| FinovateFall | 149 | 61 | 20 |
-| **Total** | **630+** | **280+** | **60** |
+| Fintech Devcon | 57 | 17 | 106 |
+| FinovateFall | 163 | 28 | 44 |
+| **Total** | **220** | **45** | **150** |
 
-¹ Gradient Labs attended Money20/20 Europe 2026. The event's published PDF sponsor list was used for this run, which is why it yielded significantly more companies. Fintech Devcon and FinovateFall were scraped entirely from their web pages — no PDF required.
+Both events were scraped entirely from their web pages — no PDF required. Contacts are capped at 20 per event per run (daily throttle) and accumulate across runs; the numbers above reflect multiple runs.
 
 ---
 

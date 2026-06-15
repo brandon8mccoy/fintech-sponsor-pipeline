@@ -68,7 +68,7 @@ PRIORITY_KEYWORDS = [
 
 
 def _score_title(title: str) -> int:
-    """Returns priority score: 1 (best) → 3 → 99 (no match)."""
+    """Returns priority score: 1 (best, CX/Support) → 8 (other senior) → 99 (no match)."""
     t = title.lower()
     for priority, keywords in enumerate(PRIORITY_KEYWORDS, start=1):
         if any(kw in t for kw in keywords):
