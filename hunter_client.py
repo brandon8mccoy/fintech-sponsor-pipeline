@@ -3,8 +3,8 @@ Hunter.io contact discovery — drop-in replacement for apollo_client.py.
 
 Flow per company:
   1. Domain search → get all known emails + titles at that domain
-  2. Score each person by title priority (P1: CX/Support, P2: Ops/COO, P3: CEO)
-  3. Return top 2 contacts (highest priority first), same dict shape as apollo_client
+  2. Score each person by title priority across 8 buying-committee roles
+  3. Return top MAX_CONTACTS_PER_COMPANY contacts (highest priority first)
 """
 
 import os
@@ -14,24 +14,55 @@ from dotenv import load_dotenv
 load_dotenv()
 
 HUNTER_BASE = "https://api.hunter.io/v2"
-MAX_CONTACTS_PER_COMPANY = 2
+MAX_CONTACTS_PER_COMPANY = 8
 
 # Title keywords by priority — checked against lowercase title
 PRIORITY_KEYWORDS = [
-    # P1 — CX / Support / Customer Operations
+    # P1 — CX / Support / Customer Operations (primary buyer/champion)
     [
         "customer experience", "customer support", "customer operations",
         "customer success", "cx", "head of support", "vp support",
         "director of support", "service operations", "client experience",
+        "head of service", "vp customer", "director of customer",
+        "contact centre", "contact center", "complaints", "member experience",
     ],
     # P2 — Operations / COO
     [
         "chief operating", "coo", "head of operations", "vp operations",
         "vp of operations", "director of operations", "business operations",
+        "head of ops", "vp ops",
     ],
-    # P3 — CEO / Founder (small companies)
+    # P3 — Revenue / Sales / GTM
+    [
+        "chief revenue", "cro", "vp sales", "head of sales", "director of sales",
+        "head of revenue", "vp revenue", "head of growth", "vp growth",
+        "head of gtm", "go-to-market", "head of business development",
+        "vp business development",
+    ],
+    # P4 — Marketing
+    [
+        "chief marketing", "cmo", "vp marketing", "head of marketing",
+        "director of marketing", "head of brand", "vp brand",
+        "head of demand", "growth marketing",
+    ],
+    # P5 — Product
+    [
+        "chief product", "cpo", "vp product", "head of product",
+        "director of product", "vp of product",
+    ],
+    # P6 — CEO / Founder
     [
         "chief executive", "ceo", "founder", "co-founder", "managing director",
+        "general manager",
+    ],
+    # P7 — Finance / CFO
+    [
+        "chief financial", "cfo", "vp finance", "head of finance",
+        "director of finance", "vp of finance",
+    ],
+    # P8 — Other senior / C-suite
+    [
+        "chief", "president", "partner", "principal", "vice president", "director",
     ],
 ]
 
