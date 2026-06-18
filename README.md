@@ -8,7 +8,7 @@ A daily pipeline that scrapes fintech conference sponsor pages, filters companie
 
 ## The Signal
 
-Gradient Labs sponsors and attends FinTech conferences, and the companies that do the same are growth-stage fintechs actively engaging in tools like Gradient Labs provides, the same profile as Gradient Labs' best customers. This pipeline automates contact sourcing of event sponsors: identifying those companies and contacts before the event, so that any in-person meeting has contacts ready for warm outreach rather than a cold introduction.
+Gradient Labs current highest performing signal is FinTech events. Building a system around scraping sponsors prior to the events would be the greatest lift to what we know already performs well. Sponsors and attendees at FinTech conferences are actively engaging in tools like Gradient Labs provides, the same profile as Gradient Labs' best customers. This pipeline automates contact sourcing of event sponsors: identifying those companies and contacts before the event, so that any in-person meeting has contacts ready for warm outreach rather than a cold introduction.
 
 The 90-day window before a conference is when these companies are most receptive. The pipeline is built to run daily — new sponsors are picked up as they're added to event pages, which typically happens in waves as the conference approaches. (For this demonstration, the cron job is not scheduled — but setup takes one command; see below.)
 
