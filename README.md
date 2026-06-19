@@ -49,7 +49,7 @@ events.json
 [Google Sheets] ── One tab per event + Summary tab
 ```
 
-**On contact volume:** Contacts per company are capped by size segment — **8 for SMB** (<200 employees), **15 for Mid Market** (200–1000), and **10 for Enterprise** (1000+), with SMB as the fallback when employee count isn't available. Across the event, contacts are capped at **200 lifetime** and **20 per run** (daily throttle). Each run pulls Tier 1 companies first until the daily cap is hit, accumulating toward 200 over successive runs. A company is only ever queried once, so Hunter usage stays bounded. Caps are tunable via `MAX_CONTACTS_PER_EVENT` / `MAX_CONTACTS_PER_RUN` in `pipeline.py`.
+**On contact volume:** Contacts per company are capped by size segment — **8 for SMB** (<200 employees), **15 for Mid Market** (200–1000), and **20 for Enterprise** (1000+), with SMB as the fallback when employee count isn't available. Across the event, contacts are capped at **200 lifetime** and **20 per run** (daily throttle). Each run pulls Tier 1 companies first until the daily cap is hit, accumulating toward 200 over successive runs. A company is only ever queried once, so Hunter usage stays bounded. Caps are tunable via `MAX_CONTACTS_PER_EVENT` / `MAX_CONTACTS_PER_RUN` in `pipeline.py`.
 
 ---
 

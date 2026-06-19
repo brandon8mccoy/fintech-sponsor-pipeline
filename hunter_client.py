@@ -22,7 +22,7 @@ HUNTER_BASE = "https://api.hunter.io/v2"
 # Contact caps by company size segment
 CONTACTS_SMB = 8         # < 200 employees
 CONTACTS_MID_MARKET = 15  # 200–1000 employees
-CONTACTS_ENTERPRISE = 10  # 1000+ employees
+CONTACTS_ENTERPRISE = 20  # 1000+ employees
 
 
 def _contacts_cap(employee_count: int | None) -> int:
@@ -98,7 +98,7 @@ def search_contacts(company_name: str, domain: str, dry_run: bool = False) -> li
     try:
         resp = requests.get(
             f"{HUNTER_BASE}/domain-search",
-            params={"domain": domain, "api_key": api_key, "limit": 15},
+            params={"domain": domain, "api_key": api_key, "limit": 20},
             timeout=15,
         )
     except requests.RequestException as e:
