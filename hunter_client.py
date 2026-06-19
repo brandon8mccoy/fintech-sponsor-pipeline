@@ -3,8 +3,12 @@ Hunter.io contact discovery — drop-in replacement for apollo_client.py.
 
 Flow per company:
   1. Domain search → get all known emails + titles at that domain
-  2. Score each person by title priority across 8 buying-committee roles
-  3. Return top MAX_CONTACTS_PER_COMPANY contacts (highest priority first)
+  2. Score each person by title priority across 5 buying-committee roles
+  3. Return top N contacts based on company size segment:
+       SMB (<200 employees)       → 8 contacts
+       Mid Market (200–1000)      → 15 contacts
+       Enterprise (1000+)         → 10 contacts
+     Falls back to SMB cap if employee count is unavailable.
 """
 
 import os
@@ -14,7 +18,22 @@ from dotenv import load_dotenv
 load_dotenv()
 
 HUNTER_BASE = "https://api.hunter.io/v2"
-MAX_CONTACTS_PER_COMPANY = 8
+
+# Contact caps by company size segment
+CONTACTS_SMB = 8         # < 200 employees
+CONTACTS_MID_MARKET = 15  # 200–1000 employees
+CONTACTS_ENTERPRISE = 10  # 1000+ employees
+
+
+def _contacts_cap(employee_count: int | None) -> int:
+    """Returns contact cap based on employee count. Defaults to SMB if unknown."""
+    if employee_count is None:
+        return CONTACTS_SMB
+    if employee_count >= 1000:
+        return CONTACTS_ENTERPRISE
+    if employee_count >= 200:
+        return CONTACTS_MID_MARKET
+    return CONTACTS_SMB
 
 # Title keywords by priority — checked against lowercase title
 PRIORITY_KEYWORDS = [
@@ -62,7 +81,7 @@ def _score_title(title: str) -> int:
 
 def search_contacts(company_name: str, domain: str, dry_run: bool = False) -> list[dict]:
     """
-    Finds up to MAX_CONTACTS_PER_COMPANY contacts at the given domain.
+    Finds contacts at the given domain, capped by company size segment.
     Returns list of contact dicts compatible with the rest of the pipeline.
     """
     if dry_run:
@@ -79,7 +98,7 @@ def search_contacts(company_name: str, domain: str, dry_run: bool = False) -> li
     try:
         resp = requests.get(
             f"{HUNTER_BASE}/domain-search",
-            params={"domain": domain, "api_key": api_key, "limit": 10},
+            params={"domain": domain, "api_key": api_key, "limit": 15},
             timeout=15,
         )
     except requests.RequestException as e:
@@ -96,9 +115,20 @@ def search_contacts(company_name: str, domain: str, dry_run: bool = False) -> li
         print(f"  Hunter error {resp.status_code} for {domain}: {resp.text[:150]}")
         return []
 
-    emails = resp.json().get("data", {}).get("emails", [])
+    data = resp.json().get("data", {})
+    emails = data.get("emails", [])
     if not emails:
         return []
+
+    # Determine cap from company size returned by Hunter
+    employee_count = data.get("organization", {}).get("estimated_num_employees")
+    cap = _contacts_cap(employee_count)
+    segment = (
+        "Enterprise" if employee_count and employee_count >= 1000
+        else "Mid Market" if employee_count and employee_count >= 200
+        else "SMB"
+    )
+    print(f"    {segment} ({employee_count or '?'} employees) → cap {cap} contacts")
 
     # Filter to people who have a name and an email
     candidates = [
@@ -109,7 +139,7 @@ def search_contacts(company_name: str, domain: str, dry_run: bool = False) -> li
     # Score and sort by priority
     candidates.sort(key=lambda e: _score_title(e.get("position") or ""))
 
-    selected = candidates[:MAX_CONTACTS_PER_COMPANY]
+    selected = candidates[:cap]
     return [_format_contact(company_name, e) for e in selected]
 
 

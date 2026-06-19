@@ -49,7 +49,7 @@ events.json
 [Google Sheets] ── One tab per event + Summary tab
 ```
 
-**On contact volume:** Contacts are capped at **200 per event** (lifetime) and **20 per event per run** (daily throttle). Each run pulls contacts for ICP companies that don't have them yet — newly discovered *and* a backfill of previously-seen ones — Tier 1 first, until the daily cap is hit. Over successive runs an event fills toward 200 without spending the whole Hunter budget at once. A company is only ever queried once (even if it yields no emails), so Hunter usage stays bounded. The caps are tunable via `MAX_CONTACTS_PER_EVENT` / `MAX_CONTACTS_PER_RUN` in `pipeline.py`.
+**On contact volume:** Contacts per company are capped by size segment — **8 for SMB** (<200 employees), **15 for Mid Market** (200–1000), and **10 for Enterprise** (1000+), with SMB as the fallback when employee count isn't available. Across the event, contacts are capped at **200 lifetime** and **20 per run** (daily throttle). Each run pulls Tier 1 companies first until the daily cap is hit, accumulating toward 200 over successive runs. A company is only ever queried once, so Hunter usage stays bounded. Caps are tunable via `MAX_CONTACTS_PER_EVENT` / `MAX_CONTACTS_PER_RUN` in `pipeline.py`.
 
 ---
 
