@@ -12,6 +12,7 @@ Flow per company:
 """
 
 import os
+from typing import Optional
 import requests
 from dotenv import load_dotenv
 
@@ -25,7 +26,7 @@ CONTACTS_MID_MARKET = 15  # 200–1000 employees
 CONTACTS_ENTERPRISE = 20  # 1000+ employees
 
 
-def _contacts_cap(employee_count: int | None) -> int:
+def _contacts_cap(employee_count: Optional[int]) -> int:
     """Returns contact cap based on employee count. Defaults to SMB if unknown."""
     if employee_count is None:
         return CONTACTS_SMB
