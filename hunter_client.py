@@ -32,43 +32,27 @@ PRIORITY_KEYWORDS = [
         "vp of operations", "director of operations", "business operations",
         "head of ops", "vp ops",
     ],
-    # P3 — Revenue / Sales / GTM
+    # P3 — CEO / Founder (decision maker at growth-stage fintechs)
     [
-        "chief revenue", "cro", "vp sales", "head of sales", "director of sales",
-        "head of revenue", "vp revenue", "head of growth", "vp growth",
-        "head of gtm", "go-to-market", "head of business development",
-        "vp business development",
+        "chief executive", "ceo", "founder", "co-founder", "managing director",
+        "general manager",
     ],
-    # P4 — Marketing
+    # P4 — Product
+    [
+        "chief product", "cpo", "vp product", "head of product",
+        "director of product", "vp of product",
+    ],
+    # P5 — Marketing
     [
         "chief marketing", "cmo", "vp marketing", "head of marketing",
         "director of marketing", "head of brand", "vp brand",
         "head of demand", "growth marketing",
     ],
-    # P5 — Product
-    [
-        "chief product", "cpo", "vp product", "head of product",
-        "director of product", "vp of product",
-    ],
-    # P6 — CEO / Founder
-    [
-        "chief executive", "ceo", "founder", "co-founder", "managing director",
-        "general manager",
-    ],
-    # P7 — Finance / CFO
-    [
-        "chief financial", "cfo", "vp finance", "head of finance",
-        "director of finance", "vp of finance",
-    ],
-    # P8 — Other senior / C-suite
-    [
-        "chief", "president", "partner", "principal", "vice president", "director",
-    ],
 ]
 
 
 def _score_title(title: str) -> int:
-    """Returns priority score: 1 (best, CX/Support) → 8 (other senior) → 99 (no match)."""
+    """Returns priority score: 1 (best, CX/Support) → 5 (Marketing) → 99 (no match)."""
     t = title.lower()
     for priority, keywords in enumerate(PRIORITY_KEYWORDS, start=1):
         if any(kw in t for kw in keywords):

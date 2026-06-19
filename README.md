@@ -41,12 +41,9 @@ events.json
 [Hunter.io] ── up to 8 contacts per company, Tier 1 companies first
     │   Priority 1: CX / Customer Operations / Support
     │   Priority 2: Operations / COO
-    │   Priority 3: Revenue / Sales / GTM
-    │   Priority 4: Marketing
-    │   Priority 5: Product
-    │   Priority 6: CEO / Founder
-    │   Priority 7: Finance / CFO
-    │   Priority 8: Other senior / C-suite
+    │   Priority 3: CEO / Founder
+    │   Priority 4: Product
+    │   Priority 5: Marketing
     │
     ▼
 [Google Sheets] ── One tab per event + Summary tab
