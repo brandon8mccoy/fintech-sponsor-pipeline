@@ -1,6 +1,6 @@
 # Fintech Event Sponsor Pipeline
 
-A daily pipeline that scrapes fintech conference sponsor pages, filters companies against Gradient Labs' ICP, and surfaces buying-committee contacts in a Google Sheet — ready for outreach before the event.
+A daily pipeline that scrapes fintech conference sponsor pages and outputs a clean company list to Google Sheets — ready for ICP filtering and contact enrichment in Clay.
 
 **Live Google Sheet:** [View here](https://docs.google.com/spreadsheets/d/1YPml-EFTLLH0BeWczKLRtO6qVUDSgmlgO4aeza1owI4)
 
@@ -8,7 +8,7 @@ A daily pipeline that scrapes fintech conference sponsor pages, filters companie
 
 ## The Signal
 
-Gradient Labs current highest performing signal is FinTech events. Building a system around scraping sponsors prior to the events would be the greatest lift to what we know already performs well. Sponsors and attendees at FinTech conferences are actively engaging in tools like Gradient Labs provides, the same profile as Gradient Labs' best customers. This pipeline automates contact sourcing of event sponsors: identifying those companies and contacts before the event, so that any in-person meeting has contacts ready for warm outreach rather than a cold introduction.
+Gradient Labs' current highest performing signal is FinTech events. Building a system around scraping sponsors prior to the events gives the greatest lift to what already performs well. Sponsors at FinTech conferences are actively engaging with tools like Gradient Labs provides — the same profile as Gradient Labs' best customers. This pipeline automates company sourcing: identifying sponsors before the event so that any in-person meeting comes with contacts ready for warm outreach rather than a cold introduction.
 
 The 90-day window before a conference is when these companies are most receptive. The pipeline is built to run daily — new sponsors are picked up as they're added to event pages, which typically happens in waves as the conference approaches. (For this demonstration, the cron job is not scheduled — but setup takes one command; see below.)
 
@@ -29,27 +29,16 @@ events.json
     │   Stage 3: BeautifulSoup + Claude Haiku
     │
     ▼
-[SQLite Dedup] ── Skip companies already processed
+[SQLite Dedup] ── Skip companies already scraped
     │
     ▼
-[ICP Filter] ── Claude Haiku scores each company:
-    │   Tier 1: Consumer-facing fintechs (neobanks, payments, lending, insurtech)
-    │   Tier 2: SMB-facing fintechs (B2B payments, expense mgmt, embedded finance)
-    │   Excluded: B2B data/API vendors, core banking platforms, enterprise RegTech
+[Google Sheets] ── Raw company list (one tab per event + Summary tab)
     │
     ▼
-[Hunter.io] ── up to 8 contacts per company, Tier 1 companies first
-    │   Priority 1: CX / Customer Operations / Support
-    │   Priority 2: Operations / COO
-    │   Priority 3: CEO / Founder
-    │   Priority 4: Product
-    │   Priority 5: Marketing
-    │
-    ▼
-[Google Sheets] ── One tab per event + Summary tab
+[Clay] ── ICP filter → contact finding → enrichment → outreach
 ```
 
-**On contact volume:** Contacts per company are capped by size segment — **8 for SMB** (<200 employees), **15 for Mid Market** (200–1000), and **20 for Enterprise** (1000+), with SMB as the fallback when employee count isn't available. Across the event, contacts are capped at **200 lifetime** and **20 per run** (daily throttle). Each run pulls Tier 1 companies first until the daily cap is hit, accumulating toward 200 over successive runs. A company is only ever queried once, so Hunter usage stays bounded. Caps are tunable via `MAX_CONTACTS_PER_EVENT` / `MAX_CONTACTS_PER_RUN` in `pipeline.py`.
+Python handles scraping and deduplication. Clay handles everything downstream: ICP classification, waterfall email finding, and contact enrichment. This keeps the Python layer simple and lets Clay's native integrations (LinkedIn, Apollo, Hunter, Clearbit) do the heavy lifting on contact data.
 
 ---
 
@@ -73,13 +62,13 @@ New events can be added to `events.json` — the pipeline picks them up on the n
 
 ## Results
 
-| Event | Sponsors Scraped | Passed ICP | Contacts |
-|---|---|---|---|
-| Fintech Devcon | 57 | 17 | 106 |
-| FinovateFall | 163 | 28 | 44 |
-| **Total** | **220** | **45** | **150** |
+| Event | Sponsors Scraped |
+|---|---|
+| Fintech Devcon | 57 |
+| FinovateFall | 163 |
+| **Total** | **220** |
 
-Both events were scraped entirely from their web pages — no PDF required. Contacts are capped at 20 per event per run (daily throttle) and accumulate across runs; the numbers above reflect multiple runs.
+Both events were scraped entirely from their web pages — no manual work required.
 
 ---
 
@@ -87,8 +76,8 @@ Both events were scraped entirely from their web pages — no PDF required. Cont
 
 ### Prerequisites
 
-- Python 3.11+
-- API keys: Anthropic, Firecrawl, Hunter.io
+- Python 3.9+
+- API keys: Firecrawl (scraping), Jina AI (fallback)
 - Google Service Account with Sheets API access
 
 ### Install
@@ -110,9 +99,7 @@ cp .env.example .env
 Fill in `.env`:
 
 ```
-ANTHROPIC_API_KEY=sk-ant-...
 FIRECRAWL_API_KEY=fc-...
-HUNTER_API_KEY=...
 GOOGLE_SHEET_ID=...
 GOOGLE_CREDENTIALS_PATH=service_account.json
 ```
@@ -121,7 +108,7 @@ GOOGLE_CREDENTIALS_PATH=service_account.json
 
 ```bash
 python3 pipeline.py          # events in the 90-day window
-python3 pipeline.py --dry-run  # stub contacts, no API calls
+python3 pipeline.py --dry-run  # stub companies, no API calls
 python3 pipeline.py --all      # ignore date filter
 python3 reset.py && python3 pipeline.py  # fresh run
 ```
@@ -143,6 +130,5 @@ Runs every morning at 7am. New sponsors added to event pages are picked up autom
 ## What I'd Build Next
 
 1. **Render JS-heavy sponsor pages** — Money20/20 USA and IFGS load sponsors client-side, so the static-HTML scraper finds nothing. A headless render (Firecrawl's JS mode or Playwright) would unlock them.
-2. **AI-written outreach copy** — once a contact is identified, use Claude to generate a personalized first touch based on the company, their event sponsorship, and Gradient Labs' value prop
-3. **Automated sequence launch** — pipe new contacts directly into an outbound sequence (La Growth Machine, Lemlist, Amplemarket etc.) triggered the moment they're added to the sheet
-
+2. **Automated Clay → sequence handoff** — trigger an outbound sequence (La Growth Machine, Lemlist, Amplemarket) the moment a contact clears ICP in Clay, with no manual steps
+3. **Attendee targeting** — extend beyond sponsors to scrape attendee lists where available; speakers are often publicly listed and represent warm intros at the event

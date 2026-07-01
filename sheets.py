@@ -2,17 +2,10 @@
 Google Sheets output module.
 
 Sheet structure:
-  Summary tab  — one row per event; "Contacts Actioned" is a live COUNTIF
-  Event tabs   — one row per contact; "Contact Actioned" column uses checkboxes
+  Summary tab  — one row per event (Event Name, URL, Date, Companies Scraped)
+  Event tabs   — one row per company (Company Name, Domain, Event, Event Date, Date Scraped)
 
-Aesthetics:
-  - Dark navy header row, white bold text, frozen
-  - Alternating white / light-blue-gray row banding
-  - Checkbox data validation on "Contact Actioned" column
-
-Checkpoint safety:
-  - Existing checkbox states are preserved across pipeline re-runs so reps
-    don't lose their actioned tracking when new sponsors are added.
+ICP filtering and contact enrichment happen downstream in Clay.
 """
 
 import os
@@ -31,23 +24,18 @@ SCOPES = [
 # ── Column definitions ────────────────────────────────────────────────────────
 
 EVENT_HEADERS = [
-    "Company Name", "Website", "Contact Name",
-    "Title", "Email", "LinkedIn URL", "Date Scraped", "Contact Actioned",
+    "Company Name", "Domain", "Event", "Event Date", "Date Scraped",
 ]
-ACTIONED_COL_IDX = 8          # 1-based column index of "Contact Actioned" (col H)
-EMAIL_COL_IDX    = 5          # 1-based column index of "Email" (col E)
 
 SUMMARY_HEADERS = [
-    "Event Name", "Event URL", "Event Date",
-    "Companies Scraped", "ICP Companies", "ICP Contacts", "Contacts Actioned",
+    "Event Name", "Event URL", "Event Date", "Companies Scraped",
 ]
 
 # ── Colours (Sheets API uses 0-1 float RGB) ───────────────────────────────────
 
-_NAVY   = {"red": 0.11, "green": 0.17, "blue": 0.29}   # #1C2B4A
-_WHITE  = {"red": 1.00, "green": 1.00, "blue": 1.00}
-_LIGHT  = {"red": 0.95, "green": 0.97, "blue": 1.00}   # very-light blue-gray
-_ACCENT = {"red": 0.86, "green": 0.93, "blue": 0.86}   # soft green for actioned header
+_NAVY  = {"red": 0.11, "green": 0.17, "blue": 0.29}   # #1C2B4A
+_WHITE = {"red": 1.00, "green": 1.00, "blue": 1.00}
+_LIGHT = {"red": 0.95, "green": 0.97, "blue": 1.00}   # very-light blue-gray
 
 
 # ── Auth / helpers ────────────────────────────────────────────────────────────
@@ -67,30 +55,6 @@ def _get_or_create_sheet(spreadsheet: gspread.Spreadsheet, title: str) -> gsprea
         return spreadsheet.add_worksheet(title=title, rows=2000, cols=len(EVENT_HEADERS) + 2)
 
 
-def _read_checkbox_states(ws: gspread.Worksheet) -> dict[str, bool]:
-    """Returns {email: bool} of existing Contact Actioned states."""
-    try:
-        rows = ws.get_all_values()
-        if len(rows) < 2:
-            return {}
-        header = rows[0]
-        try:
-            email_i   = header.index("Email")
-            actioned_i = header.index("Contact Actioned")
-        except ValueError:
-            return {}
-        result = {}
-        for row in rows[1:]:
-            if len(row) > max(email_i, actioned_i):
-                email   = row[email_i].strip()
-                checked = row[actioned_i].upper() in ("TRUE", "1", "YES", "✓")
-                if email:
-                    result[email] = checked
-        return result
-    except Exception:
-        return {}
-
-
 # ── Formatting helpers (Sheets batchUpdate requests) ─────────────────────────
 
 def _req_freeze(sheet_id: int, rows: int = 1) -> dict:
@@ -102,38 +66,19 @@ def _req_freeze(sheet_id: int, rows: int = 1) -> dict:
     }
 
 
-def _req_header_format(sheet_id: int, num_cols: int, bg: dict = None) -> dict:
-    bg = bg or _NAVY
+def _req_header_format(sheet_id: int, num_cols: int) -> dict:
     return {
         "repeatCell": {
             "range": {"sheetId": sheet_id, "startRowIndex": 0, "endRowIndex": 1,
                       "startColumnIndex": 0, "endColumnIndex": num_cols},
             "cell": {"userEnteredFormat": {
-                "backgroundColor": bg,
+                "backgroundColor": _NAVY,
                 "textFormat": {"bold": True, "foregroundColor": _WHITE, "fontSize": 10},
                 "horizontalAlignment": "CENTER",
                 "verticalAlignment": "MIDDLE",
                 "wrapStrategy": "CLIP",
             }},
             "fields": "userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment,wrapStrategy)",
-        }
-    }
-
-
-def _req_accent_col_header(sheet_id: int, col_idx: int) -> dict:
-    """Give the 'Contact Actioned' header a soft green to make it stand out."""
-    return {
-        "repeatCell": {
-            "range": {"sheetId": sheet_id, "startRowIndex": 0, "endRowIndex": 1,
-                      "startColumnIndex": col_idx - 1, "endColumnIndex": col_idx},
-            "cell": {"userEnteredFormat": {
-                "backgroundColor": _ACCENT,
-                "textFormat": {"bold": True,
-                               "foregroundColor": {"red": 0.1, "green": 0.3, "blue": 0.1},
-                               "fontSize": 10},
-                "horizontalAlignment": "CENTER",
-            }},
-            "fields": "userEnteredFormat(backgroundColor,textFormat,horizontalAlignment)",
         }
     }
 
@@ -145,15 +90,15 @@ def _req_banding(sheet_id: int, num_cols: int) -> dict:
                 "range": {"sheetId": sheet_id, "startRowIndex": 1,
                           "startColumnIndex": 0, "endColumnIndex": num_cols},
                 "rowProperties": {
-                    "firstBandColor":   _WHITE,
-                    "secondBandColor":  _LIGHT,
+                    "firstBandColor":  _WHITE,
+                    "secondBandColor": _LIGHT,
                 },
             }
         }
     }
 
 
-def _req_col_widths(sheet_id: int, widths_px: list[int]) -> list[dict]:
+def _req_col_widths(sheet_id: int, widths_px: list) -> list:
     reqs = []
     for i, px in enumerate(widths_px):
         reqs.append({
@@ -165,17 +110,6 @@ def _req_col_widths(sheet_id: int, widths_px: list[int]) -> list[dict]:
             }
         })
     return reqs
-
-
-def _req_checkbox_validation(sheet_id: int, col_idx: int, max_row: int = 2000) -> dict:
-    """Add BOOLEAN data validation (renders as a checkbox) to an entire column."""
-    return {
-        "setDataValidation": {
-            "range": {"sheetId": sheet_id, "startRowIndex": 1, "endRowIndex": max_row,
-                      "startColumnIndex": col_idx - 1, "endColumnIndex": col_idx},
-            "rule": {"condition": {"type": "BOOLEAN"}, "strict": True, "showCustomUi": True},
-        }
-    }
 
 
 def _clear_banding(spreadsheet: gspread.Spreadsheet, sheet_id: int) -> None:
@@ -194,37 +128,24 @@ def _clear_banding(spreadsheet: gspread.Spreadsheet, sheet_id: int) -> None:
 
 # ── Public writers ────────────────────────────────────────────────────────────
 
-def write_event_tab(event_name: str, contacts: list[dict], companies: list[dict]) -> None:
-    """Writes / refreshes one event tab, preserving existing checkbox states."""
+def write_event_tab(event_name: str, companies: list[dict], event_date: str) -> None:
+    """Writes / refreshes one event tab with raw company list."""
     gc          = _get_client()
     spreadsheet = gc.open_by_key(os.environ["GOOGLE_SHEET_ID"])
     tab_name    = event_name[:100]
     ws          = _get_or_create_sheet(spreadsheet, tab_name)
-
-    # Preserve existing checked states keyed by email
-    checked_by_email = _read_checkbox_states(ws)
     ws.clear()
 
     today = date.today().isoformat()
 
     rows = [EVENT_HEADERS]
-    for contact in contacts:
-        company    = next((c for c in companies if c["name"] == contact.get("company_name")), {})
-        first      = contact.get("first_name", "")
-        last       = contact.get("last_name", "")
-        full_name  = f"{first} {last}".strip()
-        email      = contact.get("email", "")
-        was_actioned = checked_by_email.get(email, False)
-
+    for company in companies:
         rows.append([
-            contact.get("company_name", ""),
+            company.get("name", ""),
             company.get("domain", ""),
-            full_name,
-            contact.get("title", ""),
-            email,
-            contact.get("linkedin_url", ""),
+            event_name,
+            event_date,
             today,
-            was_actioned,   # TRUE/FALSE restored from prior run
         ])
 
     ws.update(rows, value_input_option="USER_ENTERED")
@@ -233,22 +154,20 @@ def write_event_tab(event_name: str, contacts: list[dict], companies: list[dict]
     sid = ws.id
     _clear_banding(spreadsheet, sid)
 
-    col_widths = [200, 170, 170, 200, 220, 200, 115, 140]
+    col_widths = [220, 200, 180, 120, 120]
     requests = [
         _req_freeze(sid),
         _req_header_format(sid, len(EVENT_HEADERS)),
-        _req_accent_col_header(sid, ACTIONED_COL_IDX),
         _req_banding(sid, len(EVENT_HEADERS)),
-        _req_checkbox_validation(sid, ACTIONED_COL_IDX),
         *_req_col_widths(sid, col_widths),
     ]
     spreadsheet.batch_update({"requests": requests})
 
-    print(f"  Wrote {len(rows) - 1} contacts to tab '{tab_name}'")
+    print(f"  Wrote {len(rows) - 1} companies to tab '{tab_name}'")
 
 
 def write_summary_tab(summary_rows: list[dict]) -> None:
-    """Writes the Summary tab with a live COUNTIF for each event's actioned contacts."""
+    """Writes the Summary tab with one row per event."""
     gc          = _get_client()
     spreadsheet = gc.open_by_key(os.environ["GOOGLE_SHEET_ID"])
     ws          = _get_or_create_sheet(spreadsheet, "Summary")
@@ -256,22 +175,11 @@ def write_summary_tab(summary_rows: list[dict]) -> None:
 
     rows = [SUMMARY_HEADERS]
     for r in summary_rows:
-        tab_name = r.get("event_name", "")[:100]
-        # Escape single quotes in tab names for the COUNTIF formula
-        safe_tab = tab_name.replace("'", "''")
-        # Derive the actioned column letter from its index so this can't drift
-        # if the event-tab schema changes.
-        actioned_col = chr(ord("A") + ACTIONED_COL_IDX - 1)
-        actioned_formula = f"=COUNTIF('{safe_tab}'!{actioned_col}:{actioned_col},TRUE)"
-
         rows.append([
-            tab_name,
+            r.get("event_name", "")[:100],
             r.get("event_url", ""),
             r.get("event_date", ""),
             r.get("total_sponsors", 0),
-            r.get("passed_icp", 0),
-            r.get("contacts_found", 0),
-            actioned_formula,
         ])
 
     ws.update(rows, value_input_option="USER_ENTERED")
@@ -280,7 +188,7 @@ def write_summary_tab(summary_rows: list[dict]) -> None:
     sid = ws.id
     _clear_banding(spreadsheet, sid)
 
-    col_widths = [220, 220, 110, 160, 140, 130, 160]
+    col_widths = [220, 260, 120, 160]
     requests = [
         _req_freeze(sid),
         _req_header_format(sid, len(SUMMARY_HEADERS)),
