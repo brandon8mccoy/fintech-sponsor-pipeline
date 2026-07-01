@@ -2,63 +2,63 @@
   {
     "name": "FinovateFall",
     "date": "2026-09-09",
-    "sponsor_url": "https://informaconnect.com/finovatefall/sponsors/",
+    "speaker_url": "https://informaconnect.com/finovatefall/speakers/",
     "location": "New York, NY",
     "region": "US"
   },
   {
     "name": "Sibos 2026",
-    "date": "2026-09-09",
-    "sponsor_url": "https://www.sibos.com/sponsorship",
+    "date": "2026-09-29",
+    "speaker_url": "https://www.sibos.com/conference/speakers",
     "location": "Miami, FL",
     "region": "US"
   },
   {
     "name": "Money20/20 USA",
     "date": "2026-10-18",
-    "sponsor_url": "https://us.money2020.com/sponsor",
+    "speaker_url": "https://us.money2020.com/speakers",
     "location": "Las Vegas, NV",
     "region": "US"
   },
   {
     "name": "DC Fintech Week",
     "date": "2026-10-05",
-    "sponsor_url": "https://www.dcfintechweek.org/sponsors",
+    "speaker_url": "https://www.dcfintechweek.org/speakers",
     "location": "Washington, DC",
     "region": "US"
   },
   {
     "name": "Fintech Devcon",
     "date": "2026-08-03",
-    "sponsor_url": "https://fintechdevcon.io/sponsors/",
+    "speaker_url": "https://fintechdevcon.io/speakers/",
     "location": "Denver, CO",
     "region": "US"
   },
   {
     "name": "Money20/20 Europe",
     "date": "2027-06-02",
-    "sponsor_url": "https://europe.money2020.com/sponsor",
+    "speaker_url": "https://europe.money2020.com/speakers",
     "location": "Amsterdam, Netherlands",
     "region": "EU"
   },
   {
     "name": "FinovateEurope",
     "date": "2027-02-10",
-    "sponsor_url": "https://informaconnect.com/finovateeurope/sponsors/",
+    "speaker_url": "https://informaconnect.com/finovateeurope/speakers/",
     "location": "London, UK",
     "region": "EU"
   },
   {
     "name": "Innovate Finance Global Summit",
     "date": "2027-04-20",
-    "sponsor_url": "https://www.innovatefinance.com/ifgs/sponsors/",
+    "speaker_url": "https://www.innovatefinance.com/ifgs/speakers/",
     "location": "London, UK",
     "region": "EU"
   },
   {
     "name": "Nordic Fintech Summit",
     "date": "2027-05-13",
-    "sponsor_url": "https://nordicfintechsummit.com/sponsors",
+    "speaker_url": "https://nordicfintechsummit.com/speakers",
     "location": "Helsinki, Finland",
     "region": "EU"
   }
